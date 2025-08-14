@@ -14,6 +14,9 @@ services:
       dockerfile: services/open-webui/Dockerfile
     ports:
       - 0.0.0.0:8080:8080
+    environment:
+      - OLLAMA_BASE_URL=http://ollama:11434 # Connect to container named 'ollama'
+      - USE_OLLAMA_DOCKER=true
 
   n8n:
     container_name: n8n
@@ -129,23 +132,22 @@ services:
     ports:
       - 127.0.0.1:8081:8080
 
-  ollama:
+  ollama-gpu:
     container_name: ollama
     build:
       context: ./connexpay
       dockerfile: services/ollama/Dockerfile
 
-  ollama-cpu:
-    container_name: ollama-cpu
-    ports:
-      - 127.0.0.1:11434:11434
-
-  ollama-gpu:
-    container_name: ollama-gpu
-    ports:
-      - 127.0.0.1:11434:11434
-
-  ollama-gpu-amd:
-    container_name: ollama-gpu-amd
-    ports:
-      - 127.0.0.1:11434:11434
+  ollama-pull-llama-gpu:
+    container_name: ollama-pull-llama
+    build:
+      context: ./connexpay
+      dockerfile: services/ollama-pull-llama/Dockerfile
+    volumes:
+      - ollama_storage:/root/.ollama
+    entrypoint: /bin/sh
+    command:
+      - "-c"
+      - "sleep 3; OLLAMA_HOST=ollama:11434 ollama pull qwen2.5:7b-instruct-q4_K_M; OLLAMA_HOST=ollama:11434 ollama pull nomic-embed-text"
+    depends_on:
+      - ollama-gpu
