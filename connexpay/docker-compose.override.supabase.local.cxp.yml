@@ -2,71 +2,81 @@ services:
   studio:
     container_name: supabase-studio
     build:
-      context: ./connexpay
+      context: ../../connexpay
       dockerfile: services/supabase-studio/Dockerfile
 
   kong:
     container_name: supabase-kong
     build:
-      context: ./connexpay
+      context: ../../connexpay
       dockerfile: services/supabase-kong/Dockerfile
 
   auth:
     container_name: supabase-auth
     build:
-      context: ./connexpay
+      context: ../../connexpay
       dockerfile: services/supabase-auth/Dockerfile
 
   realtime:
     container_name: realtime-dev.supabase-realtime
     build:
-      context: ./connexpay
+      context: ../../connexpay
       dockerfile: services/supabase-realtime/Dockerfile
 
   storage:
     container_name: supabase-storage
     build:
-      context: ./connexpay
+      context: ../../connexpay
       dockerfile: services/supabase-storage/Dockerfile
 
   imgproxy:
     container_name: supabase-imgproxy
     build:
-      context: ./connexpay
+      context: ../../connexpay
       dockerfile: services/supabase-imgproxy/Dockerfile
 
   meta:
     container_name: supabase-meta
     build:
-      context: ./connexpay
+      context: ../../connexpay
       dockerfile: services/supabase-meta/Dockerfile
 
   functions:
     container_name: supabase-edge-functions
     build:
-      context: ./connexpay
+      context: ../../connexpay
       dockerfile: services/supabase-edge-functions/Dockerfile
+    deploy:
+      replicas: 0
+    command:
+      [
+        "edge-runtime",
+        "start",
+        "--main-service",
+        "/home/deno/functions/main",
+        "--unsafely-ignore-certificate-errors",
+      ]
 
   analytics:
     container_name: supabase-analytics
     build:
-      context: ./connexpay
+      context: ../../connexpay
       dockerfile: services/supabase-analytics/Dockerfile
 
   db:
     container_name: supabase-db
     build:
-      context: ./connexpay
+      context: ../../connexpay
       dockerfile: services/supabase-db/Dockerfile
 
   vector:
     container_name: supabase-vector
     build:
-      context: ./connexpay
+      context: ../../connexpay
       dockerfile: services/supabase-vector/Dockerfile
 
   supavisor:
     container_name: supabase-pooler
     build:
-      context: ./connexpay
+      context: ../../connexpay
       dockerfile: services/supabase-pooler/Dockerfile
