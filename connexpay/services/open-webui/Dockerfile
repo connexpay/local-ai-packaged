@@ -22,3 +22,11 @@ RUN echo '#!/bin/bash' > /verify-ssl.sh && \
     echo 'echo "Verifying SSL connection..."' >> /verify-ssl.sh && \
     echo 'curl -v https://deno.land' >> /verify-ssl.sh && \
     chmod +x /verify-ssl.sh
+
+# IMPORTANT: Python SSL fix
+ENV REQUESTS_CA_BUNDLE=/etc/ssl/certs/ca-certificates.crt
+ENV SSL_CERT_FILE=/etc/ssl/certs/ca-certificates.crt
+ENV CURL_CA_BUNDLE=/etc/ssl/certs/ca-certificates.crt
+
+# For Python requests library specifically
+RUN python -m pip install --upgrade pip certifi
