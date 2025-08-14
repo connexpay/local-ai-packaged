@@ -1,18 +1,18 @@
 services:
   studio:
-    container-name: supabase-studio
+    container_name: supabase-studio
     build:
       context: ./connexpay
       dockerfile: services/supabase-studio/Dockerfile
 
   kong:
-    container-name: supabase-kong
+    container_name: supabase-kong
     build:
       context: ./connexpay
       dockerfile: services/supabase-kong/Dockerfile
 
   auth:
-    container-name: supabase-auth
+    container_name: supabase-auth
     build:
       context: ./connexpay
       dockerfile: services/supabase-auth/Dockerfile
@@ -30,13 +30,13 @@ services:
       dockerfile: services/supabase-storage/Dockerfile
 
   imgproxy:
-    container-name: supabase-imgproxy
+    container_name: supabase-imgproxy
     build:
       context: ./connexpay
       dockerfile: services/supabase-imgproxy/Dockerfile
 
   meta:
-    container-name: supabase-meta
+    container_name: supabase-meta
     build:
       context: ./connexpay
       dockerfile: services/supabase-meta/Dockerfile
@@ -48,7 +48,7 @@ services:
       dockerfile: services/supabase-edge-functions/Dockerfile
 
   analytics:
-    container-name: supabase-analytics
+    container_name: supabase-analytics
     build:
       context: ./connexpay
       dockerfile: services/supabase-analytics/Dockerfile

@@ -5,7 +5,7 @@ services:
       context: ./connexpay
       dockerfile: services/flowise/Dockerfile
     ports:
-      - 127.0.0.1:3001:3001
+      - 0.0.0.0:3001:3001
 
   open-webui:
     container_name: open-webui
@@ -13,7 +13,7 @@ services:
       context: ./connexpay
       dockerfile: services/open-webui/Dockerfile
     ports:
-      - 127.0.0.1:8080:8080
+      - 0.0.0.0:8080:8080
 
   n8n:
     container_name: n8n
@@ -21,7 +21,7 @@ services:
       context: ./connexpay
       dockerfile: services/n8n/Dockerfile
     ports:
-      - 127.0.0.1:5678:5678
+      - 0.0.0.0:5678:5678
 
   n8n-import:
     container_name: n8n-import
@@ -53,6 +53,12 @@ services:
     build:
       context: ./connexpay
       dockerfile: services/caddy/Dockerfile
+    ports:
+      - 127.0.0.1:18080:80
+      - 127.0.0.1:18443:443
+    expose:
+      - 2019/tcp
+      - 443/udp
 
   langfuse-worker:
     container_name: langfuse-worker
@@ -61,6 +67,8 @@ services:
       dockerfile: services/langfuse-worker/Dockerfile
     ports:
       - 127.0.0.1:3030:3030
+    environment:
+      - CLICKHOUSE_MIGRATION_URL=${CLICKHOUSE_MIGRATION_URL:-clickhouse://clickhouse:19000}
 
   langfuse-web:
     container_name: langfuse-web
@@ -69,6 +77,8 @@ services:
       dockerfile: services/langfuse-web/Dockerfile
     ports:
       - 127.0.0.1:3000:3000
+    environment:
+      - CLICKHOUSE_MIGRATION_URL=${CLICKHOUSE_MIGRATION_URL:-clickhouse://clickhouse:19000}
 
   clickhouse:
     container_name: clickhouse
@@ -77,13 +87,17 @@ services:
       dockerfile: services/clickhouse/Dockerfile
     ports:
       - 127.0.0.1:8123:8123
-      - 127.0.0.1:9000:9000
-      - 127.0.0.1:9009:9009
+      - 127.0.0.1:19000:9000
+      - 127.0.0.1:19009:9009
+    expose:
+      - 8123/tcp
+      - 19000/tcp
+      - 19009/tcp
 
   minio:
     ports:
-      - 127.0.0.1:9010:9000
-      - 127.0.0.1:9011:9001
+      - 127.0.0.1:19010:9000
+      - 127.0.0.1:19011:9001
 
   postgres:
     container_name: postgres
@@ -131,8 +145,3 @@ services:
     container_name: ollama-gpu-amd
     ports:
       - 127.0.0.1:11434:11434
-
-  whisper:
-    image:
-    ports:
-      - 127.0.0.1:10101:10101
