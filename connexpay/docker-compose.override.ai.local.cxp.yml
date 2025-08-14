@@ -68,7 +68,7 @@ services:
     ports:
       - 127.0.0.1:3030:3030
     environment:
-      - CLICKHOUSE_MIGRATION_URL=${CLICKHOUSE_MIGRATION_URL:-clickhouse://clickhouse:19000}
+      CLICKHOUSE_MIGRATION_URL: clickhouse://clickhouse:9000
 
   langfuse-web:
     container_name: langfuse-web
@@ -78,7 +78,8 @@ services:
     ports:
       - 127.0.0.1:3000:3000
     environment:
-      - CLICKHOUSE_MIGRATION_URL=${CLICKHOUSE_MIGRATION_URL:-clickhouse://clickhouse:19000}
+      CLICKHOUSE_URL: http://clickhouse:8123
+      CLICKHOUSE_MIGRATION_URL: clickhouse://clickhouse:9000
 
   clickhouse:
     container_name: clickhouse
