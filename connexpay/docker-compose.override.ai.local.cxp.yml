@@ -94,6 +94,9 @@ services:
       - 8123/tcp
       - 19000/tcp
       - 19009/tcp
+    environment:
+      - CLICKHOUSE_DEFAULT_ACCESS_MANAGEMENT=1
+      - MAX_MEMORY_USAGE=2000000000 # 2GB limit
 
   minio:
     ports:

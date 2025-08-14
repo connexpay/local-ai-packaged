@@ -62,6 +62,9 @@ services:
     build:
       context: ../../connexpay
       dockerfile: services/supabase-analytics/Dockerfile
+    environment:
+      - MIX_ENV=prod
+      - LOGFLARE_MIN_CLUSTER_SIZE=1
 
   db:
     container_name: supabase-db
