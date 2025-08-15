@@ -14,6 +14,13 @@ services:
       dockerfile: services/open-webui/Dockerfile
     ports:
       - 0.0.0.0:8080:8080
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: all
+              capabilities: [gpu]
     environment:
       - OLLAMA_BASE_URL=http://ollama:11434 # Connect to container named 'ollama'
       - USE_OLLAMA_DOCKER=true
@@ -70,8 +77,16 @@ services:
       dockerfile: services/langfuse-worker/Dockerfile
     ports:
       - 127.0.0.1:3030:3030
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: all
+              capabilities: [gpu]
     environment:
       CLICKHOUSE_MIGRATION_URL: clickhouse://clickhouse:9000
+      NVIDIA_VISIBLE_DEVICES: all
 
   langfuse-web:
     container_name: langfuse-web
@@ -80,9 +95,17 @@ services:
       dockerfile: services/langfuse-web/Dockerfile
     ports:
       - 127.0.0.1:3000:3000
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: all
+              capabilities: [gpu]
     environment:
       CLICKHOUSE_URL: http://clickhouse:8123
       CLICKHOUSE_MIGRATION_URL: clickhouse://clickhouse:9000
+      NVIDIA_VISIBLE_DEVICES: all
 
   clickhouse:
     container_name: clickhouse
@@ -137,6 +160,16 @@ services:
     build:
       context: ./connexpay
       dockerfile: services/ollama/Dockerfile
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: all
+              capabilities: [gpu]
+    environment:
+      - NVIDIA_VISIBLE_DEVICES=all
+      - NVIDIA_DRIVER_CAPABILITIES=compute,utility
 
   ollama-pull-llama-gpu:
     container_name: ollama-pull-llama

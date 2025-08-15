@@ -12,6 +12,10 @@ The base [local-ai-packaged](https://github.com/coleam00/local-ai-packaged) proj
 
 This ConnexPay directory provides the necessary overrides to solve these issues.
 
+## Workstation Setup
+
+Review the [ConnexPay AI Workstation Optimization Guide](WORKSTATION_OPTIMIZATION.md) for detailed instructions on optimizing your Windows workstation for AI development. 26 services is a lot to host and making maximum use of your resources is crucial.
+
 ## What's in This Directory
 
 This `connexpay/` directory contains all the corporate-specific configurations needed to run the Local AI stack within ConnexPay's network:
