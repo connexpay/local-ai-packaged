@@ -4,42 +4,77 @@ services:
     build:
       context: ../../connexpay
       dockerfile: services/supabase-studio/Dockerfile
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+          cpus: "1"
 
   kong:
     container_name: supabase-kong
     build:
       context: ../../connexpay
       dockerfile: services/supabase-kong/Dockerfile
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+          cpus: "1"
 
   auth:
     container_name: supabase-auth
     build:
       context: ../../connexpay
       dockerfile: services/supabase-auth/Dockerfile
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+          cpus: "1"
 
   realtime:
     container_name: realtime-dev.supabase-realtime
     build:
       context: ../../connexpay
       dockerfile: services/supabase-realtime/Dockerfile
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+          cpus: "1"
 
   storage:
     container_name: supabase-storage
     build:
       context: ../../connexpay
       dockerfile: services/supabase-storage/Dockerfile
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+          cpus: "1"
 
   imgproxy:
     container_name: supabase-imgproxy
     build:
       context: ../../connexpay
       dockerfile: services/supabase-imgproxy/Dockerfile
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+          cpus: "1"
 
   meta:
     container_name: supabase-meta
     build:
       context: ../../connexpay
       dockerfile: services/supabase-meta/Dockerfile
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+          cpus: "1"
 
   functions:
     container_name: supabase-edge-functions
@@ -48,20 +83,21 @@ services:
       dockerfile: services/supabase-edge-functions/Dockerfile
     deploy:
       replicas: 0
-    command:
-      [
-        "edge-runtime",
-        "start",
-        "--main-service",
-        "/home/deno/functions/main",
-        "--unsafely-ignore-certificate-errors",
-      ]
+      resources:
+        limits:
+          memory: 256M
+          cpus: "0.5"
 
   analytics:
     container_name: supabase-analytics
     build:
       context: ../../connexpay
       dockerfile: services/supabase-analytics/Dockerfile
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+          cpus: "1"
     environment:
       - MIX_ENV=prod
       - LOGFLARE_MIN_CLUSTER_SIZE=1
@@ -71,15 +107,35 @@ services:
     build:
       context: ../../connexpay
       dockerfile: services/supabase-db/Dockerfile
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: all
+              capabilities: [gpu]
+        limits:
+          memory: 6G
+          cpus: "4"
 
   vector:
     container_name: supabase-vector
     build:
       context: ../../connexpay
       dockerfile: services/supabase-vector/Dockerfile
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+          cpus: "1"
 
   supavisor:
     container_name: supabase-pooler
     build:
       context: ../../connexpay
       dockerfile: services/supabase-pooler/Dockerfile
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+          cpus: "1"

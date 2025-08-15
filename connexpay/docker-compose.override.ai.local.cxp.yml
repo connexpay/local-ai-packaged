@@ -6,6 +6,8 @@ services:
       dockerfile: services/flowise/Dockerfile
     ports:
       - 0.0.0.0:3001:3001
+    deploy:
+      replicas: 0
 
   open-webui:
     container_name: open-webui
@@ -32,6 +34,11 @@ services:
       dockerfile: services/n8n/Dockerfile
     ports:
       - 0.0.0.0:5678:5678
+    deploy:
+      resources:
+        limits:
+          cpus: "3"
+          memory: 4G
 
   n8n-import:
     container_name: n8n-import
@@ -47,6 +54,11 @@ services:
     ports:
       - 127.0.0.1:6333:6333
       - 127.0.0.1:6334:6334
+    deploy:
+      resources:
+        limits:
+          cpus: "2"
+          memory: 2G
 
   neo4j:
     container_name: neo4j
@@ -57,6 +69,15 @@ services:
       - 127.0.0.1:7473:7473
       - 127.0.0.1:7474:7474
       - 127.0.0.1:7687:7687
+    deploy:
+      resources:
+        limits:
+          cpus: "3"
+          memory: 4G
+    environment:
+      - NEO4J_server_memory_heap_initial__size=1G
+      - NEO4J_server_memory_heap_max__size=2G
+      - NEO4J_server_memory_pagecache_size=1G
 
   caddy:
     container_name: caddy
@@ -69,6 +90,11 @@ services:
     expose:
       - 2019/tcp
       - 443/udp
+    deploy:
+      resources:
+        limits:
+          cpus: "0.5"
+          memory: 256M
 
   langfuse-worker:
     container_name: langfuse-worker
@@ -95,13 +121,6 @@ services:
       dockerfile: services/langfuse-web/Dockerfile
     ports:
       - 127.0.0.1:3000:3000
-    deploy:
-      resources:
-        reservations:
-          devices:
-            - driver: nvidia
-              count: all
-              capabilities: [gpu]
     environment:
       CLICKHOUSE_URL: http://clickhouse:8123
       CLICKHOUSE_MIGRATION_URL: clickhouse://clickhouse:9000
@@ -120,14 +139,23 @@ services:
       - 8123/tcp
       - 19000/tcp
       - 19009/tcp
+    deploy:
+      resources:
+        limits:
+          cpus: "2"
+          memory: 4G
     environment:
-      - CLICKHOUSE_DEFAULT_ACCESS_MANAGEMENT=1
-      - MAX_MEMORY_USAGE=2000000000 # 2GB limit
+      MAX_MEMORY_USAGE: 4000000000
 
   minio:
     ports:
       - 127.0.0.1:19010:9000
       - 127.0.0.1:19011:9001
+    deploy:
+      resources:
+        limits:
+          cpus: "1"
+          memory: 1G
 
   postgres:
     container_name: postgres
@@ -136,6 +164,15 @@ services:
       dockerfile: services/postgres/Dockerfile
     ports:
       - 127.0.0.1:5433:5432
+    deploy:
+      resources:
+        limits:
+          cpus: "2"
+          memory: 2G
+    environment:
+      POSTGRES_SHARED_BUFFERS: 512MB
+      POSTGRES_EFFECTIVE_CACHE_SIZE: 1GB
+      POSTGRES_WORK_MEM: 16MB
 
   redis:
     container_name: redis
@@ -144,6 +181,14 @@ services:
       dockerfile: services/redis/Dockerfile
     ports:
       - 127.0.0.1:6379:6379
+    deploy:
+      resources:
+        limits:
+          cpus: "1"
+          memory: 1G
+    environment:
+      REDIS_MAXMEMORY: 800mb
+      REDIS_MAXMEMORY_POLICY: allkeys-lru
 
   searxng:
     container_name: searxng
@@ -154,6 +199,14 @@ services:
       - ./connexpay/searxng:/etc/searxng:rw
     ports:
       - 127.0.0.1:8081:8080
+    deploy:
+      resources:
+        limits:
+          cpus: "2"
+          memory: 1G
+    environment:
+      UWSGI_WORKERS: 4
+      UWSGI_THREADS: 8
 
   ollama-gpu:
     container_name: ollama
@@ -170,6 +223,20 @@ services:
     environment:
       - NVIDIA_VISIBLE_DEVICES=all
       - NVIDIA_DRIVER_CAPABILITIES=compute,utility
+      - OLLAMA_NUM_PARALLEL=1 # Single request only (reduce CPU load)
+      - OLLAMA_CONTEXT_LENGTH=4096 # Reduce from 8192 (less GPU memory)
+      - OLLAMA_KEEP_ALIVE=10m # Keep model loaded longer
+      - OLLAMA_MAX_LOADED_MODELS=1 # Only one model at a time
+      - OLLAMA_THREADS=4 # Limit CPU threads
+      # Force more aggressive GPU usage
+      - OLLAMA_GPU_LAYERS=99 # Force ALL layers to GPU
+      - OLLAMA_FLASH_ATTENTION=1 # Already enabled ✅
+      - OLLAMA_KV_CACHE_TYPE=f16 # Higher precision cache (uses more GPU)
+      - OLLAMA_TENSOR_PARALLEL_SIZE=1 # GPU tensor parallelization
+      - OLLAMA_GPU_MEMORY_FRACTION=0.95 # Use 95% of GPU memory
+      # Enable batch processing for higher throughput
+      - OLLAMA_MAX_QUEUE_SIZE=10
+      - OLLAMA_CONCURRENT_REQUESTS=2 # Process multiple requests
 
   ollama-pull-llama-gpu:
     container_name: ollama-pull-llama
