@@ -39,12 +39,18 @@ services:
         limits:
           cpus: "3"
           memory: 4G
+    environment:
+      - NODE_EXTRA_CA_CERTS=/etc/ssl/certs/ca-certificates.crt
+      - NODE_OPTIONS=--use-openssl-ca
 
   n8n-import:
     container_name: n8n-import
     build:
       context: ./connexpay
       dockerfile: services/n8n-import/Dockerfile
+    environment:
+      - NODE_EXTRA_CA_CERTS=/etc/ssl/certs/ca-certificates.crt
+      - NODE_OPTIONS=--use-openssl-ca
 
   qdrant:
     container_name: qdrant

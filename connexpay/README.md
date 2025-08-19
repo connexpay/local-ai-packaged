@@ -205,4 +205,9 @@ For corporate-specific issues:
 
 ---
 
+## Detailed Implementation History
+
+For complete technical implementation details, debugging process, and lessons learned,
+see [Corporate Implementation Guide](./docs/setup/corporate-implementation-guide.md).
+
 **This corporate adaptation maintains all the functionality of the original project while ensuring compatibility with ConnexPay's corporate network infrastructure.**

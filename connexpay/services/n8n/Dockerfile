@@ -27,4 +27,10 @@ RUN echo '#!/bin/sh' > /verify-ssl.sh && \
     echo 'curl -v https://deno.land' >> /verify-ssl.sh && \
     chmod +x /verify-ssl.sh
 
+# Add Node.js SSL environment variables
+ENV NODE_EXTRA_CA_CERTS=/etc/ssl/certs/ca-certificates.crt
+ENV NODE_OPTIONS=--use-openssl-ca
+ENV SSL_CERT_FILE=/etc/ssl/certs/ca-certificates.crt
+ENV SSL_CERT_DIR=/etc/ssl/certs
+
 USER node
