@@ -7,23 +7,22 @@ corporate network overrides as the full stack. Uses the same Docker Compose proj
 name ("localai") for consistency.
 
 Dependencies started:
-- Supabase stack (database backend for n8n)
-- n8n-import (initial workflow/credential imports)
-- n8n (main workflow automation interface)
-- postgres (data persistence - part of core services)
+- postgres (data persistence - required by n8n)
 - redis (caching/sessions)
 - qdrant (vector database for RAG workflows)
 - neo4j (graph database for complex workflows)
+- n8n-import (initial workflow/credential imports)
+- n8n (main workflow automation interface)
 
 Optional services can be added via --include flag.
+
+Note: This version does NOT use Supabase - it uses standalone Postgres from the main docker-compose.yml
 """
 
 import os
 import subprocess
-import shutil
 import time
 import argparse
-import platform
 import sys
 
 def run_command(cmd, cwd=None):
@@ -31,50 +30,13 @@ def run_command(cmd, cwd=None):
     print("Running:", " ".join(cmd))
     subprocess.run(cmd, cwd=cwd, check=True)
 
-def clone_supabase_repo():
-    """Clone the Supabase repository using sparse checkout if not already present."""
-    if not os.path.exists("supabase"):
-        print("Cloning the Supabase repository...")
-        run_command([
-            "git", "clone", "--filter=blob:none", "--no-checkout",
-            "https://github.com/supabase/supabase.git"
-        ])
-        os.chdir("supabase")
-        run_command(["git", "sparse-checkout", "init", "--cone"])
-        run_command(["git", "sparse-checkout", "set", "docker"])
-        run_command(["git", "checkout", "master"])
-        os.chdir("..")
-    else:
-        print("Supabase repository already exists, updating...")
-        os.chdir("supabase")
-        try:
-            # Try to pull from the tracked branch first
-            run_command(["git", "pull"])
-        except subprocess.CalledProcessError:
-            # If that fails, explicitly pull from origin master
-            print("Standard pull failed, trying explicit pull from origin master...")
-            try:
-                run_command(["git", "pull", "origin", "master"])
-            except subprocess.CalledProcessError as e:
-                print(f"Warning: Could not update Supabase repository: {e}")
-                print("Continuing with existing Supabase files...")
-        os.chdir("..")
-
-def prepare_supabase_env():
-    """Copy .env to .env in supabase/docker."""
-    env_path = os.path.join("supabase", "docker", ".env")
-    env_example_path = os.path.join(".env")
-    print("Copying .env in root to .env in supabase/docker...")
-    shutil.copyfile(env_example_path, env_path)
-
 def check_corporate_overrides():
     """Check that the required ConnexPay override files exist."""
     print("Checking for ConnexPay corporate override files...")
     
     required_files = [
         "connexpay/ZscalerRootCertificate.crt",
-        "connexpay/docker-compose.override.ai.local.cxp.yml",
-        "connexpay/docker-compose.override.supabase.local.cxp.yml"
+        "connexpay/docker-compose.override.ai.local.cxp.yml"
     ]
     
     missing_files = []
@@ -93,91 +55,9 @@ def check_corporate_overrides():
     
     print("All required ConnexPay corporate override files found.")
 
-def generate_searxng_secret_key():
-    """Generate a secret key for SearXNG based on the current platform."""
-    print("Checking SearXNG settings...")
-
-    # For ConnexPay version, use the corporate settings file
-    settings_path = os.path.join("connexpay", "searxng", "settings.yml")
-    settings_base_path = os.path.join("connexpay", "searxng", "settings-base.yml")
-    
-    # Fallback to root directory if connexpay version doesn't exist
-    if not os.path.exists(settings_path):
-        print("ConnexPay SearXNG settings not found, checking root directory...")
-        settings_path = os.path.join("searxng", "settings.yml")
-        settings_base_path = os.path.join("searxng", "settings-base.yml")
-
-    print(f"Using SearXNG settings at: {settings_path}")
-
-    # Check if settings-base.yml exists
-    if not os.path.exists(settings_base_path):
-        print(f"Warning: SearXNG base settings file not found at {settings_base_path}")
-        return
-
-    # Check if settings.yml exists, if not create it from settings-base.yml
-    if not os.path.exists(settings_path):
-        print(f"SearXNG settings.yml not found. Creating from {settings_base_path}...")
-        try:
-            # Ensure the directory exists
-            os.makedirs(os.path.dirname(settings_path), exist_ok=True)
-            shutil.copyfile(settings_base_path, settings_path)
-            print(f"Created {settings_path} from {settings_base_path}")
-        except Exception as e:
-            print(f"Error creating settings.yml: {e}")
-            return
-    else:
-        print(f"SearXNG settings.yml already exists at {settings_path}")
-
-    print("Generating SearXNG secret key...")
-
-    # Detect the platform and run the appropriate command
-    system = platform.system()
-
-    try:
-        if system == "Windows":
-            print("Detected Windows platform, using PowerShell to generate secret key...")
-            # PowerShell command to generate a random key and replace in the settings file
-            ps_command = [
-                "powershell", "-Command",
-                "$randomBytes = New-Object byte[] 32; " +
-                "(New-Object Security.Cryptography.RNGCryptoServiceProvider).GetBytes($randomBytes); " +
-                "$secretKey = -join ($randomBytes | ForEach-Object { \"{0:x2}\" -f $_ }); " +
-                f"(Get-Content {settings_path}) -replace 'ultrasecretkey', $secretKey | Set-Content {settings_path}"
-            ]
-            subprocess.run(ps_command, check=True)
-
-        elif system == "Darwin":  # macOS
-            print("Detected macOS platform, using sed command with empty string parameter...")
-            # macOS sed command requires an empty string for the -i parameter
-            openssl_cmd = ["openssl", "rand", "-hex", "32"]
-            random_key = subprocess.check_output(openssl_cmd).decode('utf-8').strip()
-            sed_cmd = ["sed", "-i", "", f"s|ultrasecretkey|{random_key}|g", settings_path]
-            subprocess.run(sed_cmd, check=True)
-
-        else:  # Linux and other Unix-like systems
-            print("Detected Linux/Unix platform, using standard sed command...")
-            # Standard sed command for Linux
-            openssl_cmd = ["openssl", "rand", "-hex", "32"]
-            random_key = subprocess.check_output(openssl_cmd).decode('utf-8').strip()
-            sed_cmd = ["sed", "-i", f"s|ultrasecretkey|{random_key}|g", settings_path]
-            subprocess.run(sed_cmd, check=True)
-
-        print("SearXNG secret key generated successfully.")
-
-    except Exception as e:
-        print(f"Error generating SearXNG secret key: {e}")
-        print("You may need to manually generate the secret key using the commands:")
-        print(f"  - Linux: sed -i \"s|ultrasecretkey|$(openssl rand -hex 32)|g\" {settings_path}")
-        print(f"  - macOS: sed -i '' \"s|ultrasecretkey|$(openssl rand -hex 32)|g\" {settings_path}")
-        print("  - Windows (PowerShell):")
-        print("    $randomBytes = New-Object byte[] 32")
-        print("    (New-Object Security.Cryptography.RNGCryptoServiceProvider).GetBytes($randomBytes)")
-        print("    $secretKey = -join ($randomBytes | ForEach-Object { \"{0:x2}\" -f $_ })")
-        print(f"    (Get-Content {settings_path}) -replace 'ultrasecretkey', $secretKey | Set-Content {settings_path}")
-
 def stop_n8n_services(profile=None):
     """Stop N8N and related services."""
-    print("Stopping existing N8N and Supabase services...")
+    print("Stopping existing N8N services...")
     
     # Core services to stop
     services_to_stop = [
@@ -202,36 +82,52 @@ def stop_n8n_services(profile=None):
     except subprocess.CalledProcessError:
         print("Some services may not have been running - continuing...")
     
-    # Also stop Supabase services
-    print("Stopping Supabase services...")
-    supabase_cmd = ["docker", "compose", "-p", "localai"]
-    supabase_cmd.extend(["-f", "supabase/docker/docker-compose.yml"])
-    supabase_cmd.extend(["-f", "connexpay/docker-compose.override.supabase.local.cxp.yml"])
-    supabase_cmd.extend(["down"])
+    # Do a clean down to remove orphans
+    print("Cleaning up any orphaned containers...")
+    cleanup_cmd = ["docker", "compose", "-p", "localai"]
+    if profile and profile != "none":
+        cleanup_cmd.extend(["--profile", profile])
+    cleanup_cmd.extend(["-f", "docker-compose.yml"])
+    cleanup_cmd.extend(["-f", "connexpay/docker-compose.override.ai.local.cxp.yml"])
+    cleanup_cmd.extend(["down", "--remove-orphans"])
     
     try:
-        run_command(supabase_cmd)
+        run_command(cleanup_cmd)
     except subprocess.CalledProcessError:
-        print("Some Supabase services may not have been running - continuing...")
-
-def start_supabase():
-    """Start the Supabase services with corporate overrides."""
-    print("Starting Supabase services with ConnexPay corporate overrides...")
-    cmd = ["docker", "compose", "-p", "localai", "-f", "supabase/docker/docker-compose.yml"]
-    
-    # Add the corporate override for Supabase
-    cmd.extend(["-f", "connexpay/docker-compose.override.supabase.local.cxp.yml"])
-        
-    cmd.extend(["up", "-d"])
-    run_command(cmd)
+        print("Cleanup completed with some warnings - continuing...")
 
 def start_n8n_stack(profile="gpu-nvidia", include_services=None):
     """Start N8N and essential dependencies."""
     print("Starting N8N stack with corporate overrides...")
     
-    # Essential services for N8N
+    # Start Postgres first (critical for n8n)
+    print("Starting Postgres database...")
+    postgres_cmd = ["docker", "compose", "-p", "localai"]
+    if profile and profile != "none":
+        postgres_cmd.extend(["--profile", profile])
+    postgres_cmd.extend(["-f", "docker-compose.yml"])
+    postgres_cmd.extend(["-f", "connexpay/docker-compose.override.ai.local.cxp.yml"])
+    postgres_cmd.extend(["up", "-d", "postgres"])
+    
+    run_command(postgres_cmd)
+    
+    # Wait for Postgres to be ready
+    print("Waiting for Postgres to be ready...")
+    for i in range(30):
+        check_cmd = ["docker", "exec", "postgres", "pg_isready", "-U", "postgres"]
+        try:
+            result = subprocess.run(check_cmd, capture_output=True, text=True)
+            if result.returncode == 0:
+                print("Postgres is ready!")
+                break
+        except:
+            pass
+        time.sleep(1)
+        if i == 29:
+            print("Warning: Postgres may not be fully ready, continuing anyway...")
+    
+    # Essential services for N8N (excluding postgres which is already started)
     essential_services = [
-        "postgres",        # Data persistence (required by n8n)
         "redis",          # Caching/sessions
         "qdrant",         # Vector database for RAG workflows
         "neo4j",          # Graph database for complex workflows
@@ -294,7 +190,6 @@ def show_access_info(include_services=None):
     print("🔗 Neo4j:          http://localhost:7474")
     print("🗄️  Postgres:       localhost:5432")
     print("📦 Redis:          localhost:6379")
-    print("🚀 Supabase:       http://localhost:8000")
     
     if include_services:
         print("\nOptional Services:")
@@ -328,12 +223,10 @@ def main():
                       help='Only stop N8N services, do not start')
     parser.add_argument('--status', action='store_true',
                       help='Show status of services')
-    parser.add_argument('--skip-searxng', action='store_true',
-                      help='Skip SearXNG secret key generation')
     
     args = parser.parse_args()
 
-    print("Starting N8N Minimal Stack...")
+    print("Starting N8N Minimal Stack (No Supabase)...")
     print("This includes corporate certificate injection for VPN connectivity.")
     print()
 
@@ -348,24 +241,9 @@ def main():
         stop_n8n_services(args.profile)
         print("N8N and related services stopped.")
         return
-
-    # Clone Supabase if needed
-    clone_supabase_repo()
-    prepare_supabase_env()
-    
-    # Generate SearXNG secret key if searxng is included
-    if args.include and 'searxng' in args.include and not args.skip_searxng:
-        generate_searxng_secret_key()
     
     # Stop existing services first
     stop_n8n_services(args.profile)
-    
-    # Start Supabase first (database backend for n8n)
-    start_supabase()
-    
-    # Give Supabase some time to initialize
-    print("Waiting for Supabase to initialize...")
-    time.sleep(10)
     
     # Start the N8N stack with optional services
     start_n8n_stack(args.profile, args.include)

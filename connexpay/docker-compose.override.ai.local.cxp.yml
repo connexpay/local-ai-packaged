@@ -42,6 +42,7 @@ services:
     environment:
       - NODE_EXTRA_CA_CERTS=/etc/ssl/certs/ca-certificates.crt
       - NODE_OPTIONS=--use-openssl-ca
+      - DB_POSTGRESDB_HOST=postgres
 
   n8n-import:
     container_name: n8n-import
@@ -51,6 +52,7 @@ services:
     environment:
       - NODE_EXTRA_CA_CERTS=/etc/ssl/certs/ca-certificates.crt
       - NODE_OPTIONS=--use-openssl-ca
+      - DB_POSTGRESDB_HOST=postgres
 
   qdrant:
     container_name: qdrant
