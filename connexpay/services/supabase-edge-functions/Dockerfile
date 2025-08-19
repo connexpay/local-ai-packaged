@@ -17,6 +17,9 @@ RUN cp /usr/local/share/ca-certificates/ZscalerRootCertificate.crt /etc/ssl/cert
     sed -i 's/http:/https:/g' /etc/apt/sources.list.d/* /etc/apt/sources.list || true && \
     update-ca-certificates
 
+ENV DENO_TLS_CA_STORE=system
+ENV DENO_CERT=/usr/local/share/ca-certificates/ZscalerRootCertificate.crt
+
 # Create a script to verify certificate
 RUN echo '#!/bin/bash' > /verify-ssl.sh && \
     echo 'echo "Verifying SSL connection..."' >> /verify-ssl.sh && \
