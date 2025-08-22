@@ -1,4 +1,6 @@
-FROM n8nio/n8n:latest
+FROM dpage/pgadmin4:latest
+
+# pgAdmin uses Alpine Linux, so we need to use apk instead of apt-get
 USER root
 
 # Temporarily disable SSL verification for apk
@@ -10,10 +12,7 @@ RUN apk update && \
     ca-certificates \
     curl \
     openssl \
-    wget \
-    python3 \
-    py3-pip \
-    py3-pillow
+    wget
 
 # Copy your corporate certificate
 COPY ZscalerRootCertificate.crt /usr/local/share/ca-certificates/ZscalerRootCertificate.crt
@@ -24,19 +23,11 @@ RUN cp /usr/local/share/ca-certificates/ZscalerRootCertificate.crt /etc/ssl/cert
     sed -i 's/http/https/g' /etc/apk/repositories && \
     update-ca-certificates
 
-# install pythong libraries (with break-system-packages flag)
-RUN pip3 install --break-system-packages reportlab
-
 # Create a script to verify certificate
 RUN echo '#!/bin/sh' > /verify-ssl.sh && \
     echo 'echo "Verifying SSL connection..."' >> /verify-ssl.sh && \
     echo 'curl -v https://deno.land' >> /verify-ssl.sh && \
     chmod +x /verify-ssl.sh
 
-# Add Node.js SSL environment variables
-ENV NODE_EXTRA_CA_CERTS=/etc/ssl/certs/ca-certificates.crt
-ENV NODE_OPTIONS=--use-openssl-ca
-ENV SSL_CERT_FILE=/etc/ssl/certs/ca-certificates.crt
-ENV SSL_CERT_DIR=/etc/ssl/certs
-
-USER node
+# Switch back to pgadmin user
+USER pgadmin

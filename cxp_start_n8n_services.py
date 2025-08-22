@@ -66,7 +66,8 @@ def stop_n8n_services(profile=None):
         "postgres",
         "redis",
         "qdrant",
-        "neo4j"
+        "neo4j",
+        "pgadmin"
     ]
     
     # Build command for stopping services
@@ -132,7 +133,8 @@ def start_n8n_stack(profile="gpu-nvidia", include_services=None):
         "qdrant",         # Vector database for RAG workflows
         "neo4j",          # Graph database for complex workflows
         "n8n-import",     # Import initial workflows/credentials
-        "n8n"             # Main workflow automation interface
+        "n8n",            # Main workflow automation interface
+        "pgadmin"         # Database management interface   
     ]
     
     # Optional services that can be included

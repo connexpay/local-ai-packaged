@@ -39,6 +39,8 @@ services:
         limits:
           cpus: "3"
           memory: 4G
+    volumes:
+      - ./connexpay/shared:/data/cxp
     environment:
       - NODE_EXTRA_CA_CERTS=/etc/ssl/certs/ca-certificates.crt
       - NODE_OPTIONS=--use-openssl-ca
@@ -259,3 +261,19 @@ services:
       - "sleep 3; OLLAMA_HOST=ollama:11434 ollama pull qwen2.5:7b-instruct-q4_K_M; OLLAMA_HOST=ollama:11434 ollama pull nomic-embed-text"
     depends_on:
       - ollama-gpu
+
+  pgadmin:
+    container_name: pgadmin
+    build:
+      context: ./connexpay
+      dockerfile: services/pgadmin/Dockerfile
+    ports:
+      - 127.0.0.1:5050:80
+    environment:
+      PGADMIN_DEFAULT_EMAIL: ${PGADMIN_EMAIL:-admin@example.com}
+      PGADMIN_DEFAULT_PASSWORD: ${PGADMIN_PASSWORD:-admin}
+      PGADMIN_CONFIG_SERVER_MODE: "False"
+      PGADMIN_CONFIG_MASTER_PASSWORD_REQUIRED: "False"
+    volumes:
+      - pgadmin_data:/var/lib/pgadmin
+    restart: unless-stopped

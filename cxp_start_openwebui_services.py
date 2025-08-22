@@ -101,7 +101,8 @@ def start_openwebui_stack(profile="gpu-nvidia", include_services=None):
             "clickhouse": "clickhouse",
             "minio": "minio",
             "flowise": "flowise",
-            "n8n": "n8n"
+            "n8n": "n8n",
+            "pagadmin": "pgadmin"
         }
         
         for service in include_services:
